@@ -13,10 +13,27 @@ struct URLText: View {
     
     var body: some View {
         Text(url?.lastPathComponent ?? "Choose one")
-            .onTapGesture { popoverPresented = true }
-            .popover(isPresented: $popoverPresented) {
-                Text(url?.path ?? "")
-                    .padding()
-            }
     }
 }
+
+struct MultipleURLText: View {
+    let url: [URL]?
+    @State private var popoverPresented = false
+    
+    var tips: String {
+        let array: [String] = url?.compactMap({
+            $0.lastPathComponent
+        }) ?? []
+        if array.isEmpty {
+            return "Choose one"
+        }
+        else {
+            return array.joined(separator: ",")
+        }
+    }
+    
+    var body: some View {
+        Text(tips)
+    }
+}
+

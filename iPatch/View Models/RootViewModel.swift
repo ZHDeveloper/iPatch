@@ -9,7 +9,7 @@ import AppKit
 import Combine
 
 class RootViewModel: ObservableObject {
-    @Published var debOrDylibURL: URL? = nil
+    @Published var debOrDylibURL: [URL] = []
     @Published var ipaURL: URL? = nil
     @Published var injectSubstrate = true
     @Published var displayName = ""
@@ -17,14 +17,16 @@ class RootViewModel: ObservableObject {
     @Published var isPatching = false
     
     var readyToPatch: Bool {
-        ![debOrDylibURL, ipaURL].contains(nil)
-            && fileManager.filesExist(atFileURLS: [debOrDylibURL!, ipaURL!])
+        var array: [URL?] = debOrDylibURL
+        array.append(ipaURL)
+        return !array.contains(nil)
+        && fileManager.filesExist(atFileURLS: array.compactMap{$0})
     }
     
     func patch() {
         guard readyToPatch else { return }
         isPatching = true
-        iPatch.patch(ipa: ipaURL!, withDebOrDylib: debOrDylibURL!, andDisplayName: displayName, injectSubstrate: injectSubstrate)
+        iPatch.patch(ipa: ipaURL!, withDebOrDylib: debOrDylibURL, andDisplayName: displayName, injectSubstrate: injectSubstrate)
         isPatching = false
     }
     
@@ -33,18 +35,22 @@ class RootViewModel: ObservableObject {
     }
     
     func handleDrop(of providers: [NSItemProvider]) -> Bool {
-        let _ = providers.first?.loadObject(ofClass: URL.self) { url, _  in
-            switch url!.pathExtension {
-            case "deb", "dylib":
-                DispatchQueue.main.async {
-                    self.debOrDylibURL = url!
+        providers.forEach {
+            let _ = $0.loadObject(ofClass: URL.self) { url, _  in
+                switch url!.pathExtension {
+                case "deb", "dylib":
+                    DispatchQueue.main.async {
+                        if let url = url {
+                            self.debOrDylibURL.append(url)
+                        }
+                    }
+                case "ipa":
+                    DispatchQueue.main.async {
+                        self.ipaURL = url!
+                    }
+                default:
+                    NSSound.beep()
                 }
-            case "ipa":
-                DispatchQueue.main.async {
-                    self.ipaURL = url!
-                }
-            default:
-                NSSound.beep()
             }
         }
         return true

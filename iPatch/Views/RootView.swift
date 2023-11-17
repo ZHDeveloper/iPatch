@@ -15,8 +15,8 @@ struct RootView: View {
             Header()
             Spacer()
             HStack {
-                FilePickerButton("DEB/Dylib", selection: $vm.debOrDylibURL, extensions: ["deb", "dylib"])
-                URLText(url: vm.debOrDylibURL)
+                FilesPickerButton("DEBs/Dylibs", selection: $vm.debOrDylibURL, extensions: ["deb", "dylib"])
+                MultipleURLText(url: vm.debOrDylibURL)
             }
             HStack {
                 FilePickerButton("IPA", selection: $vm.ipaURL, extensions: ["ipa"])
@@ -47,7 +47,6 @@ struct RootView: View {
         }
         .padding()
         .onDrop(of: [.fileURL], isTargeted: .none) { providers in vm.handleDrop(of: providers) }
-        .onChange(of: vm.ipaURL) { _ in vm.ipaURLDidChange() }
         .sheet(isPresented: $vm.isPatching) { PatchingProgressView() }
     }
 }
